@@ -1,384 +1,795 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ClimateGuard AI</title>
+<title>ClimateGuard AI | Disease Early Warning</title>
 
 <link rel="stylesheet"
-href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+ href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- OneSignal Web Push SDK -->
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.init({
+      appId: "YOUR_ONESIGNAL_APP_ID"
+    });
+    window.climateOneSignal = OneSignal;
+  });
+</script>
 
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-
+:root {
+  --green:#087f68;
+  --dark:#123c38;
+  --light:#eff8f5;
+  --muted:#687c78;
+  --border:#dce9e4;
+}
+* { box-sizing:border-box; }
 body {
-  font-family: Arial, sans-serif;
-  background: #071426;
-  color: #edf5ff;
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:#f4f8f7;
+  color:#183b36;
 }
-
 header {
-  background: #102746;
-  padding: 20px;
-  border-bottom: 1px solid #25466b;
+  background:#103d37;
+  color:white;
+  padding:17px 5%;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:15px;
+  flex-wrap:wrap;
 }
-
-header h1 { color: #45d6b0; }
-header p { color: #b7c9dc; margin-top: 6px; }
-
+.brand { font-size:21px; font-weight:bold; }
+.brand span { color:#64d8b5; }
+header small { color:#c4e7dc; }
 nav {
-  display: flex;
-  gap: 10px;
-  padding: 12px;
-  overflow-x: auto;
-  background: #0d2039;
+  display:flex;
+  gap:8px;
+  padding:12px 5%;
+  background:white;
+  border-bottom:1px solid var(--border);
+  overflow-x:auto;
 }
-
-nav a {
-  color: white;
-  text-decoration: none;
-  padding: 10px 14px;
-  border-radius: 8px;
-  background: #183653;
-  white-space: nowrap;
+nav button {
+  border:0;
+  padding:10px 15px;
+  border-radius:8px;
+  background:#edf5f2;
+  color:#31564e;
+  cursor:pointer;
+  white-space:nowrap;
+  font-weight:600;
 }
-
-main { padding: 16px; max-width: 1200px; margin: auto; }
-
-.card {
-  background: #102746;
-  border: 1px solid #294967;
-  border-radius: 13px;
-  padding: 18px;
-  margin-bottom: 16px;
+nav button.active, nav button:hover {
+  background:var(--green);
+  color:white;
 }
-
-h2 { font-size: 19px; margin-bottom: 14px; color: #54dfbd; }
-h3 { margin-bottom: 10px; }
-
-button {
-  background: #087fdb;
-  color: white;
-  border: none;
-  padding: 12px 16px;
-  border-radius: 8px;
-  font-size: 15px;
-  cursor: pointer;
-  margin-top: 12px;
+main { max-width:1200px; margin:auto; padding:24px 5%; }
+.page { display:none; }
+.page.active { display:block; }
+h1 { margin:0 0 8px; font-size:27px; }
+.subtitle { color:var(--muted); margin:0 0 22px; line-height:1.5; }
+.hero {
+  background:linear-gradient(120deg,#103d37,#087f68);
+  color:white;
+  padding:30px;
+  border-radius:17px;
+  margin-bottom:22px;
 }
-
-button:active { opacity: .8; }
-
+.hero h1 { font-size:29px; max-width:650px; }
+.hero p { color:#d5eee6; line-height:1.6; max-width:650px; }
+.hero .tagline { color:#78e1bd; font-weight:bold; letter-spacing:1px; }
 .grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 14px;
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:16px;
 }
-
-.value {
-  font-size: 28px;
-  font-weight: bold;
-  margin: 10px 0;
+.card {
+  background:white;
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:19px;
+  box-shadow:0 3px 12px #173e3510;
+  margin-bottom:16px;
 }
-
-.small { color: #b5c8dd; font-size: 13px; line-height: 1.6; }
-.green { color: #45d6a0; }
-.yellow { color: #ffd166; }
-.red { color: #ff7373; }
-
-#map {
-  height: 330px;
-  border-radius: 10px;
-  z-index: 1;
+.card h3 { margin:0 0 12px; font-size:16px; }
+.metric { font-size:28px; font-weight:bold; margin:8px 0; }
+.muted { color:var(--muted); font-size:13px; line-height:1.5; }
+.green { color:#13835d; }
+.yellow { color:#c18a13; }
+.red { color:#d34b4b; }
+.risk-pill {
+  display:inline-block;
+  border-radius:30px;
+  padding:7px 13px;
+  font-size:12px;
+  font-weight:bold;
 }
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 12px;
+.low { background:#dff5e9; color:#16774e; }
+.medium { background:#fff1cc; color:#986500; }
+.high { background:#ffe0df; color:#b83232; }
+button.action {
+  background:var(--green);
+  color:white;
+  border:0;
+  border-radius:9px;
+  padding:11px 15px;
+  font-weight:bold;
+  cursor:pointer;
 }
-
-th, td {
-  padding: 12px 8px;
-  text-align: left;
-  border-bottom: 1px solid #294967;
+button.secondary {
+  background:#e8f4ef;
+  color:#126c58;
+  border:1px solid #cfe6dc;
 }
-
-th { color: #54dfbd; }
-
-footer {
-  text-align: center;
-  color: #9eb3ca;
-  padding: 25px;
+button:disabled { opacity:.6; cursor:not-allowed; }
+#map { height:410px; border-radius:12px; z-index:1; }
+.legend {
+  display:flex;
+  gap:18px;
+  flex-wrap:wrap;
+  margin:13px 0;
+  font-size:13px;
 }
-
+.legend span { display:flex; align-items:center; gap:6px; }
+.dot { width:12px; height:12px; border-radius:50%; display:inline-block; }
+.dot.red { background:#df4545; }
+.dot.yellow { background:#eab83e; }
+.dot.green { background:#26a66d; }
 .notice {
-  background: #263b54;
-  padding: 12px;
-  border-radius: 8px;
-  color: #ffd98c;
-  font-size: 13px;
-  line-height: 1.5;
+  padding:13px 15px;
+  border-radius:10px;
+  background:#edf6f2;
+  color:#31564e;
+  line-height:1.5;
+  margin:12px 0;
+  font-size:14px;
 }
-
-@media(max-width:600px) {
-  header h1 { font-size: 23px; }
-  main { padding: 10px; }
-  #map { height: 270px; }
-  th, td { font-size: 13px; }
+.alert-item {
+  padding:13px 0;
+  border-bottom:1px solid var(--border);
+  line-height:1.5;
+}
+.alert-item:last-child { border:0; }
+.popup {
+  position:fixed;
+  right:18px;
+  bottom:18px;
+  width:min(360px, calc(100% - 36px));
+  background:white;
+  border:1px solid var(--border);
+  box-shadow:0 8px 30px #102e2730;
+  border-radius:14px;
+  padding:18px;
+  z-index:9999;
+  display:none;
+}
+.popup.show { display:block; animation:slideup .25s ease; }
+@keyframes slideup {
+  from { transform:translateY(15px); opacity:0; }
+  to { transform:translateY(0); opacity:1; }
+}
+.popup-head { display:flex; justify-content:space-between; gap:10px; }
+.close {
+  border:0; background:transparent; font-size:22px;
+  cursor:pointer; color:#60736e;
+}
+footer {
+  text-align:center;
+  padding:22px;
+  color:#71827d;
+  font-size:12px;
+}
+.small-note { font-size:12px; color:#778781; line-height:1.5; }
+ul { padding-left:20px; line-height:1.8; }
+@media(max-width:760px) {
+  .grid { grid-template-columns:1fr 1fr; }
+  main { padding:20px 4%; }
+  .hero { padding:23px; }
+  .hero h1 { font-size:24px; }
+  #map { height:340px; }
+}
+@media(max-width:480px) {
+  .grid { grid-template-columns:1fr; }
+  header { padding:15px 4%; }
+  h1 { font-size:23px; }
 }
 </style>
 </head>
 
 <body>
-
 <header>
-  <h1>🌿 ClimateGuard AI</h1>
-  <p>AI-Empowered Early Warning System for Dengue & Malaria</p>
+  <div>
+    <div class="brand">ClimateGuard <span>AI</span></div>
+    <small>Intelligent Disease Early Warning System</small>
+  </div>
+  <button class="action secondary" id="pushButton" onclick="enablePush()">
+    Enable High-Risk Alerts
+  </button>
 </header>
 
 <nav>
-  <a href="#dashboard">Dashboard</a>
-  <a href="#weather">Weather</a>
-  <a href="#map-section">Risk Map</a>
-  <a href="#history">History</a>
-  <a href="#alerts">Alerts</a>
-  <a href="#prevention">Prevention</a>
+  <button class="active" onclick="showPage('dashboard',this)">Dashboard</button>
+  <button onclick="showPage('riskmap',this)">Risk Map</button>
+  <button onclick="showPage('history',this)">Disease History</button>
+  <button onclick="showPage('alerts',this)">Alert History</button>
+  <button onclick="showPage('weather',this)">Weather</button>
+  <button onclick="showPage('prevention',this)">Prevention</button>
 </nav>
 
 <main>
-
-<section id="dashboard" class="card">
-  <h2>Welcome to ClimateGuard AI</h2>
-  <p class="small">
-    Monitor weather conditions and explore historical disease
-    information to support early prevention.
-  </p>
-  <br>
-  <h3>📍 Your Current Location</h3>
-  <p id="location">Location not detected yet.</p>
-  <p class="small" id="coordinates">Latitude and longitude will appear here.</p>
-  <button onclick="detectLocation()">📍 Detect My Location</button>
-  <p class="small" id="locationStatus" aria-live="polite">
-    Allow location access when your browser asks.
-  </p>
-</section>
-
-<section id="weather">
-  <h2>🌦 Weather Information</h2>
-  <div class="grid">
-    <div class="card">
-      <h3>🌡 Temperature</h3>
-      <div class="value" id="temperature">-- °C</div>
-      <p class="small">Current temperature</p>
+  <!-- DASHBOARD -->
+  <section class="page active" id="dashboard">
+    <div class="hero">
+      <div class="tagline">EARLY DETECTION. SMARTER PREVENTION.</div>
+      <h1>Smarter Disease Surveillance. Safer Communities.</h1>
+      <p>Monitor environmental conditions, explore disease-risk zones
+      and receive early warnings for dengue and malaria.</p>
+      <button class="action" onclick="showPage('riskmap')">Explore Risk Map</button>
     </div>
 
-    <div class="card">
-      <h3>💧 Humidity</h3>
-      <div class="value" id="humidity">-- %</div>
-      <p class="small">Relative humidity</p>
+    <h1>Area Overview</h1>
+    <p class="subtitle">Location and environmental information for your area.</p>
+
+    <div class="grid">
+      <div class="card">
+        <h3>Your Location</h3>
+        <div class="metric" id="location">Not detected</div>
+        <p class="muted" id="locationStatus">Allow location access to check your area.</p>
+        <button class="action" onclick="getLocation()">Detect My Location</button>
+      </div>
+      <div class="card">
+        <h3>Dengue Risk</h3>
+        <div class="metric" id="dengueRisk">MEDIUM</div>
+        <span class="risk-pill medium" id="dengueBadge">DEMO MEDIUM</span>
+        <p class="muted">Illustrative prototype risk level, not a real outbreak warning.</p>
+      </div>
+      <div class="card">
+        <h3>Malaria Risk</h3>
+        <div class="metric" id="malariaRisk">LOW</div>
+        <span class="risk-pill low" id="malariaBadge">DEMO LOW</span>
+        <p class="muted">Illustrative prototype risk level, not a real outbreak warning.</p>
+      </div>
     </div>
 
-    <div class="card">
-      <h3>🌧 Rainfall</h3>
-      <div class="value" id="rainfall">-- mm</div>
-      <p class="small">Current precipitation</p>
-    </div>
-  </div>
-  <p class="small" id="weatherStatus">
-    Detect your location to retrieve weather information.
-  </p>
-  <p class="small" id="updated"></p>
-</section>
-
-<section>
-  <h2>🦟 Disease Risk Overview</h2>
-  <div class="grid">
-    <div class="card">
-      <h3>🦟 Dengue Risk</h3>
-      <div class="value yellow">Awaiting model</div>
-      <p class="small">AI prediction will appear here after model integration.</p>
+    <div class="grid">
+      <div class="card">
+        <h3>Temperature</h3>
+        <div class="metric" id="temperature">-- °C</div>
+        <p class="muted">Current weather reading</p>
+      </div>
+      <div class="card">
+        <h3>Humidity</h3>
+        <div class="metric" id="humidity">-- %</div>
+        <p class="muted">Current relative humidity</p>
+      </div>
+      <div class="card">
+        <h3>Rainfall</h3>
+        <div class="metric" id="rainfall">-- mm</div>
+        <p class="muted">Current precipitation reading</p>
+      </div>
     </div>
 
-    <div class="card">
-      <h3>🦟 Malaria Risk</h3>
-      <div class="value yellow">Awaiting model</div>
-      <p class="small">AI prediction will appear here after model integration.</p>
+    <div class="notice">
+      <strong>Prototype data notice:</strong> Risk levels and historical figures
+      shown here are sample data for demonstrating the interface. They are not
+      official health department information or validated AI predictions.
     </div>
-  </div>
-  <p class="notice">
-    These are not yet actual disease predictions. A validated
-    machine-learning model and reliable disease records are required.
-  </p>
-</section>
+  </section>
 
-<section id="map-section" class="card">
-  <h2>🗺 Location Map</h2>
-  <p class="small">
-    The map shows your detected coordinates. Disease-risk zones
-    will be added after verified area-wise data is available.
-  </p>
-  <br>
-  <div id="map"></div>
-</section>
+  <!-- RISK MAP -->
+  <section class="page" id="riskmap">
+    <h1>AI Disease Risk Map</h1>
+    <p class="subtitle">Explore illustrative dengue and malaria risk zones around Pune.</p>
 
-<section id="history" class="card">
-  <h2>📊 Disease History – Last 5 Years</h2>
-  <p class="small">
-    Historical dengue and malaria records, organised by area and year.
-  </p>
+    <div class="card">
+      <h3>Risk Level Legend</h3>
+      <div class="legend">
+        <span><i class="dot red"></i> Red = High risk</span>
+        <span><i class="dot yellow"></i> Yellow = Medium risk</span>
+        <span><i class="dot green"></i> Green = Low risk</span>
+      </div>
+      <p class="muted">Select a circle on the map to view its sample risk information.</p>
+      <div id="map"></div>
+      <div id="riskDetails" class="notice">
+        Select a coloured zone to see its details.
+      </div>
+    </div>
 
-  <label for="area">Select area:</label>
-  <select id="area" style="padding:10px;margin:10px 0;width:100%;">
-    <option value="">Select an area</option>
-    <option>Hadapsar</option>
-    <option>Kothrud</option>
-    <option>Shivajinagar</option>
-    <option>Baner</option>
-    <option>Viman Nagar</option>
-  </select>
+    <div class="notice">
+      The coloured circles are illustrative sample zones. They do not represent
+      confirmed disease cases or live government surveillance data.
+    </div>
+  </section>
 
-  <label for="disease">Select disease:</label>
-  <select id="disease" style="padding:10px;margin:10px 0;width:100%;">
-    <option>Dengue</option>
-    <option>Malaria</option>
-  </select>
+  <!-- HISTORY -->
+  <section class="page" id="history">
+    <h1>Disease History & Analytics</h1>
+    <p class="subtitle">Example trend chart for demonstrating historical disease analysis.</p>
+    <div class="card">
+      <h3>Illustrative Dengue and Malaria Cases</h3>
+      <canvas id="historyChart"></canvas>
+      <p class="small-note">Sample figures only. Replace with verified district-wise data before real-world use.</p>
+    </div>
+  </section>
 
-  <div class="notice" id="historyStatus">
-    No verified area-wise patient records have been connected yet.
-    Historical figures will appear here after adding a reliable dataset.
-  </div>
+  <!-- ALERT HISTORY -->
+  <section class="page" id="alerts">
+    <h1>Smart Alert History</h1>
+    <p class="subtitle">Messages displayed by this prototype during your visits.</p>
+    <div class="card">
+      <div id="alertHistory">
+        <p class="muted">No alerts recorded yet.</p>
+      </div>
+      <button class="action secondary" onclick="clearAlerts()">Clear History</button>
+    </div>
+    <div class="notice">
+      Low and medium risk messages appear inside the website. High-risk mobile
+      push alerts require a configured OneSignal account and a trusted sending
+      workflow.
+    </div>
+  </section>
 
-  <table>
-    <thead>
-      <tr><th>Year</th><th>Reported cases</th></tr>
-    </thead>
-    <tbody>
-      <tr><td>2021</td><td>Awaiting verified data</td></tr>
-      <tr><td>2022</td><td>Awaiting verified data</td></tr>
-      <tr><td>2023</td><td>Awaiting verified data</td></tr>
-      <tr><td>2024</td><td>Awaiting verified data</td></tr>
-      <tr><td>2025</td><td>Awaiting verified data</td></tr>
-    </tbody>
-  </table>
-</section>
+  <!-- WEATHER -->
+  <section class="page" id="weather">
+    <h1>Weather Monitoring</h1>
+    <p class="subtitle">Live environmental readings from Open-Meteo for your selected location.</p>
+    <div class="grid">
+      <div class="card">
+        <h3>Temperature</h3>
+        <div class="metric" id="weatherTemp">-- °C</div>
+      </div>
+      <div class="card">
+        <h3>Relative Humidity</h3>
+        <div class="metric" id="weatherHumidity">-- %</div>
+      </div>
+      <div class="card">
+        <h3>Precipitation</h3>
+        <div class="metric" id="weatherRain">-- mm</div>
+      </div>
+    </div>
+    <div class="notice" id="weatherMessage">
+      Detect your location to load current weather information.
+    </div>
+    <p class="small-note">Weather conditions can support risk research, but cannot confirm an outbreak by themselves.</p>
+  </section>
 
-<section id="alerts" class="card">
-  <h2>🔔 Health Alerts</h2>
-  <p class="small">
-    No verified outbreak alerts are connected yet.
-    Alerts will be displayed here when reliable risk information is available.
-  </p>
-</section>
-
-<section id="prevention" class="card">
-  <h2>🛡 Prevention Tips</h2>
-  <p>✅ Remove stagnant water around your home.</p><br>
-  <p>✅ Use mosquito repellents.</p><br>
-  <p>✅ Wear full-sleeved clothing.</p><br>
-  <p>✅ Keep water containers covered.</p><br>
-  <p>✅ Seek medical advice if you develop concerning symptoms.</p>
-</section>
-
+  <!-- PREVENTION -->
+  <section class="page" id="prevention">
+    <h1>Prevention & Safety</h1>
+    <p class="subtitle">Simple steps to reduce mosquito breeding and bites.</p>
+    <div class="grid">
+      <div class="card">
+        <h3>Dengue Prevention</h3>
+        <ul>
+          <li>Remove stagnant water from containers.</li>
+          <li>Cover water storage tanks.</li>
+          <li>Use mosquito repellent.</li>
+          <li>Wear long-sleeved clothing.</li>
+          <li>Use window screens and mosquito nets.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Malaria Prevention</h3>
+        <ul>
+          <li>Sleep under insecticide-treated nets where recommended.</li>
+          <li>Use mosquito repellent.</li>
+          <li>Fit screens on doors and windows.</li>
+          <li>Remove mosquito breeding sites.</li>
+          <li>Seek medical advice if fever develops.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>When to Seek Help</h3>
+        <ul>
+          <li>Do not ignore fever or unusual symptoms.</li>
+          <li>Consult a qualified healthcare professional.</li>
+          <li>Do not self-medicate.</li>
+          <li>Follow local public-health guidance.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
 </main>
 
+<div class="popup" id="riskPopup">
+  <div class="popup-head">
+    <strong id="popupTitle">Area Risk Update</strong>
+    <button class="close" onclick="closePopup()">×</button>
+  </div>
+  <p id="popupMessage"></p>
+  <p class="small-note" id="popupNote"></p>
+  <button class="action" onclick="closePopup()">Got it</button>
+</div>
+
 <footer>
-  ClimateGuard AI | Predict • Prevent • Protect
-  <p class="small">Educational prototype – not a medical diagnosis system.</p>
+  ClimateGuard AI · Student Prototype · Demo risk data is not an official health warning.
 </footer>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
 <script>
-const map = L.map('map').setView([18.5204, 73.8567], 11);
+/* ---------------------------------
+   PAGE NAVIGATION
+---------------------------------- */
+function showPage(pageId, button) {
+  document.querySelectorAll(".page").forEach(page => page.classList.remove("active"));
+  document.getElementById(pageId).classList.add("active");
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; OpenStreetMap contributors'
-}).addTo(map);
+  document.querySelectorAll("nav button").forEach(btn => btn.classList.remove("active"));
+  if (button) button.classList.add("active");
 
-let marker;
+  if (pageId === "riskmap") {
+    setTimeout(() => initializeMap(), 150);
+  }
+  if (pageId === "history") {
+    setTimeout(() => drawHistoryChart(), 100);
+  }
+}
 
-function detectLocation() {
-  const status = document.getElementById("locationStatus");
+/* ---------------------------------
+   DEMO RISK ZONES
+   These are NOT real surveillance data.
+---------------------------------- */
+const riskZones = [
+  {
+    name:"Pune Central — Demo Zone A",
+    lat:18.5204, lon:73.8567,
+    level:"HIGH", dengue:"HIGH", malaria:"MEDIUM",
+    reason:"Illustrative high-risk sample zone."
+  },
+  {
+    name:"Pune West — Demo Zone B",
+    lat:18.5700, lon:73.7800,
+    level:"MEDIUM", dengue:"MEDIUM", malaria:"MEDIUM",
+    reason:"Illustrative medium-risk sample zone."
+  },
+  {
+    name:"Pune East — Demo Zone C",
+    lat:18.4800, lon:73.9200,
+    level:"LOW", dengue:"LOW", malaria:"LOW",
+    reason:"Illustrative low-risk sample zone."
+  }
+];
 
-  if (!navigator.geolocation) {
-    status.textContent = "GPS location is not supported by this browser.";
+let map;
+let mapReady = false;
+let userLat = 18.5204;
+let userLon = 73.8567;
+let userLocationName = "Pune (default demo location)";
+let userLocationDetected = false;
+let userMarker = null;
+let selectedZone = riskZones[1];
+let chartCreated = false;
+
+/* ---------------------------------
+   MAP
+---------------------------------- */
+function initializeMap() {
+  if (mapReady) {
+    map.invalidateSize();
     return;
   }
 
-  status.textContent = "Requesting your location permission...";
+  map = L.map("map").setView([18.5204,73.8567], 11);
 
-  navigator.geolocation.getCurrentPosition(
-    async function(position) {
-      const lat = position.coords.latitude;
-      const lon = position.coords.longitude;
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution:"&copy; OpenStreetMap contributors"
+  }).addTo(map);
 
-      document.getElementById("location").textContent =
-        "Your detected location";
+  riskZones.forEach(zone => {
+    const color = zone.level === "HIGH" ? "#df4545" :
+                  zone.level === "MEDIUM" ? "#eab83e" : "#26a66d";
 
-      document.getElementById("coordinates").textContent =
-        "Latitude: " + lat.toFixed(5) +
-        " | Longitude: " + lon.toFixed(5);
+    L.circleMarker([zone.lat,zone.lon], {
+      radius:13,
+      color:color,
+      fillColor:color,
+      fillOpacity:0.75,
+      weight:2
+    }).addTo(map)
+      .bindPopup("<b>"+zone.name+"</b><br>Overall demo level: "+zone.level)
+      .on("click", () => showZoneDetails(zone));
+  });
 
-      status.textContent = "Location detected successfully.";
+  mapReady = true;
 
-      map.setView([lat, lon], 13);
-
-      if (marker) map.removeLayer(marker);
-
-      marker = L.marker([lat, lon])
-        .addTo(map)
-        .bindPopup("Your detected location")
-        .openPopup();
-
-      await getWeather(lat, lon);
-    },
-
-    function(error) {
-      status.textContent =
-        "Location permission was denied or unavailable. Please enable location access and try again.";
-    },
-
-    { enableHighAccuracy: true, timeout: 15000 }
-  );
+  // Show the user's actual GPS location on the map.
+  if (userLocationDetected) {
+    updateUserMarker();
+  }
 }
 
-async function getWeather(lat, lon) {
-  const status = document.getElementById("weatherStatus");
+/* ---------------------------------
+   USER LOCATION MARKER
+---------------------------------- */
+function updateUserMarker() {
+  if (!mapReady || !map || !userLocationDetected) return;
 
-  status.textContent = "Loading weather information...";
+  // Create the standard blue Leaflet location pin.
+  if (userMarker) {
+    userMarker.setLatLng([userLat,userLon]);
+  } else {
+    userMarker = L.marker([userLat,userLon], {
+      title:"Your Current Location",
+      riseOnHover:true
+    }).addTo(map);
 
-  const url =
-    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code&timezone=auto`;
+    userMarker.bindPopup("<b>Your Current Location</b>");
+  }
+
+  // Centre the map on the user's actual location.
+  map.setView([userLat,userLon], 13);
+}
+
+function showZoneDetails(zone) {
+  selectedZone = zone;
+  const box = document.getElementById("riskDetails");
+  box.innerHTML =
+    "<strong>"+zone.name+"</strong><br>" +
+    "Overall sample risk: <b>"+zone.level+"</b><br>" +
+    "Dengue: "+zone.dengue+"<br>" +
+    "Malaria: "+zone.malaria+"<br>" +
+    zone.reason+
+    "<br><small>Illustrative demo information only.</small>";
+}
+
+/* ---------------------------------
+   LOCATION AND WEATHER
+---------------------------------- */
+function getLocation() {
+  const status = document.getElementById("locationStatus");
+
+  if (!navigator.geolocation) {
+    status.textContent = "Location is not supported by this browser.";
+    return;
+  }
+
+  status.textContent = "Getting your location...";
+
+  navigator.geolocation.getCurrentPosition(async position => {
+    userLat = position.coords.latitude;
+    userLon = position.coords.longitude;
+
+    userLocationDetected = true;
+    userLocationName = userLat.toFixed(3)+", "+userLon.toFixed(3);
+
+    document.getElementById("location").textContent = userLocationName;
+    status.textContent = "Location detected successfully.";
+
+    // Add or update the user's marker if the map is already open.
+    updateUserMarker();
+
+    await getWeather(userLat,userLon);
+    updateNearestDemoZone();
+  }, error => {
+    status.textContent = "Location permission denied or unavailable. Using Pune demo location.";
+    getWeather(18.5204,73.8567);
+  }, { enableHighAccuracy:true, timeout:12000 });
+}
+
+function updateNearestDemoZone() {
+  let nearest = riskZones[0];
+  let shortest = Infinity;
+
+  riskZones.forEach(zone => {
+    const distance = Math.hypot(userLat-zone.lat,userLon-zone.lon);
+    if (distance < shortest) {
+      shortest = distance;
+      nearest = zone;
+    }
+  });
+
+  selectedZone = nearest;
+  setRiskDisplay(nearest);
+  showRiskPopup(nearest.level, nearest.name);
+}
+
+function setRiskDisplay(zone) {
+  document.getElementById("dengueRisk").textContent = zone.dengue;
+  document.getElementById("malariaRisk").textContent = zone.malaria;
+
+  setBadge("dengueBadge",zone.dengue);
+  setBadge("malariaBadge",zone.malaria);
+}
+
+function setBadge(id,level) {
+  const badge = document.getElementById(id);
+  badge.className = "risk-pill " + level.toLowerCase();
+  badge.textContent = "DEMO " + level;
+}
+
+async function getWeather(lat,lon) {
+  const url = "https://api.open-meteo.com/v1/forecast?latitude="+lat+
+    "&longitude="+lon+
+    "&current=temperature_2m,relative_humidity_2m,precipitation&timezone=auto";
 
   try {
     const response = await fetch(url);
-
-    if (!response.ok) throw new Error("Weather service error");
-
+    if (!response.ok) throw new Error("Weather request failed");
     const data = await response.json();
-    const weather = data.current;
+    const current = data.current;
 
     document.getElementById("temperature").textContent =
-      weather.temperature_2m + " °C";
-
+      current.temperature_2m+" °C";
     document.getElementById("humidity").textContent =
-      weather.relative_humidity_2m + " %";
-
+      current.relative_humidity_2m+" %";
     document.getElementById("rainfall").textContent =
-      weather.precipitation + " mm";
+      current.precipitation+" mm";
 
-    status.textContent = "Weather data received from Open-Meteo.";
+    document.getElementById("weatherTemp").textContent =
+      current.temperature_2m+" °C";
+    document.getElementById("weatherHumidity").textContent =
+      current.relative_humidity_2m+" %";
+    document.getElementById("weatherRain").textContent =
+      current.precipitation+" mm";
 
-    document.getElementById("updated").textContent =
-      "Weather observation time: " + weather.time +
-      " | Timezone: " + data.timezone;
+    document.getElementById("weatherMessage").textContent =
+      "Weather data loaded. These readings can support disease-risk research, " +
+      "but do not independently determine dengue or malaria risk.";
   } catch(error) {
-    status.textContent =
-      "Unable to retrieve weather data. Please try again.";
+    document.getElementById("weatherMessage").textContent =
+      "Unable to load live weather right now. Please try again.";
   }
 }
-</script>
 
+/* ---------------------------------
+   POPUP + ALERT HISTORY
+---------------------------------- */
+function showRiskPopup(level,area) {
+  const popup = document.getElementById("riskPopup");
+  const title = document.getElementById("popupTitle");
+  const message = document.getElementById("popupMessage");
+  const note = document.getElementById("popupNote");
+
+  if (level === "HIGH") {
+    title.textContent = "High Risk Demo Alert";
+    message.textContent = area+" is marked HIGH in the sample map. Take precautions and check official local health updates.";
+    note.textContent = "This is a demonstration alert, not a confirmed outbreak warning.";
+  } else if (level === "MEDIUM") {
+    title.textContent = "Medium Risk Update";
+    message.textContent = area+" is marked MEDIUM in the sample map. Remove stagnant water and use mosquito protection.";
+    note.textContent = "This is illustrative demo information.";
+  } else {
+    title.textContent = "Low Risk Update";
+    message.textContent = area+" is marked LOW in the sample map. Continue basic mosquito-prevention measures.";
+    note.textContent = "This is illustrative demo information.";
+  }
+
+  popup.classList.add("show");
+  addAlert(level,title.textContent,message.textContent);
+}
+
+function closePopup() {
+  document.getElementById("riskPopup").classList.remove("show");
+}
+
+function addAlert(level,title,message) {
+  const old = JSON.parse(localStorage.getItem("climateAlerts") || "[]");
+  const today = new Date().toLocaleString();
+
+  if (old.length && old[0].title === title && old[0].date.slice(0,10) === today.slice(0,10)) {
+    return;
+  }
+
+  old.unshift({level,title,message,date:today});
+  localStorage.setItem("climateAlerts",JSON.stringify(old.slice(0,20)));
+  renderAlerts();
+}
+
+function renderAlerts() {
+  const history = JSON.parse(localStorage.getItem("climateAlerts") || "[]");
+  const container = document.getElementById("alertHistory");
+
+  if (!history.length) {
+    container.innerHTML = '<p class="muted">No alerts recorded yet.</p>';
+    return;
+  }
+
+  container.innerHTML = history.map(item =>
+    '<div class="alert-item"><span class="risk-pill '+item.level.toLowerCase()+
+    '">'+item.level+'</span><br><strong>'+escapeHTML(item.title)+
+    '</strong><br>'+escapeHTML(item.message)+
+    '<br><small class="muted">'+escapeHTML(item.date)+'</small></div>'
+  ).join("");
+}
+
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, char => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[char]));
+}
+
+function clearAlerts() {
+  localStorage.removeItem("climateAlerts");
+  renderAlerts();
+}
+
+/* ---------------------------------
+   ONESIGNAL PUSH SUBSCRIPTION
+---------------------------------- */
+async function enablePush() {
+  const button = document.getElementById("pushButton");
+
+  try {
+    if (!window.climateOneSignal) {
+      alert("Push service is still loading, or the OneSignal App ID has not been configured.");
+      return;
+    }
+
+    await window.climateOneSignal.Notifications.requestPermission();
+    button.textContent = "Push Permission Requested";
+    alert("Please check your browser's notification permission. If permission is granted, subscribe to ClimateGuard AI alerts.");
+  } catch(error) {
+    alert("Unable to enable notifications. Check OneSignal setup and browser permissions.");
+  }
+}
+
+/* ---------------------------------
+   HISTORY CHART - SAMPLE DATA
+---------------------------------- */
+function drawHistoryChart() {
+  if (chartCreated) return;
+
+  const canvas = document.getElementById("historyChart");
+  if (!canvas) return;
+
+  new Chart(canvas, {
+    type:"line",
+    data:{
+      labels:["2022","2023","2024","2025"],
+      datasets:[
+        {
+          label:"Dengue (sample cases)",
+          data:[120,180,145,230],
+          borderColor:"#087f68",
+          backgroundColor:"#087f6820",
+          tension:0.35
+        },
+        {
+          label:"Malaria (sample cases)",
+          data:[80,95,70,110],
+          borderColor:"#d69b2d",
+          backgroundColor:"#d69b2d20",
+          tension:0.35
+        }
+      ]
+    },
+    options:{
+      responsive:true,
+      plugins:{ legend:{ position:"bottom" } },
+      scales:{ y:{ beginAtZero:true } }
+    }
+  });
+
+  chartCreated = true;
+}
+
+/* ---------------------------------
+   INITIAL PAGE SETUP
+---------------------------------- */
+window.addEventListener("load", () => {
+  renderAlerts();
+  setRiskDisplay(riskZones[1]);
+
+  // Default demo popup on first visit of the day.
+  const lastPopup = localStorage.getItem("climatePopupDate");
+  const today = new Date().toDateString();
+
+  if (lastPopup !== today) {
+    showRiskPopup("MEDIUM","Pune West — Demo Zone B");
+    localStorage.setItem("climatePopupDate",today);
+  }
+
+  getWeather(18.5204,73.8567);
+});
+</script>
 </body>
 </html>
