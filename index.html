@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClimateGuard AI</title>
+
+<link rel="stylesheet"
+href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: Arial, sans-serif;
+  background: #071426;
+  color: #edf5ff;
+}
+
+header {
+  background: #102746;
+  padding: 20px;
+  border-bottom: 1px solid #25466b;
+}
+
+header h1 { color: #45d6b0; }
+header p { color: #b7c9dc; margin-top: 6px; }
+
+nav {
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  overflow-x: auto;
+  background: #0d2039;
+}
+
+nav a {
+  color: white;
+  text-decoration: none;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: #183653;
+  white-space: nowrap;
+}
+
+main { padding: 16px; max-width: 1200px; margin: auto; }
+
+.card {
+  background: #102746;
+  border: 1px solid #294967;
+  border-radius: 13px;
+  padding: 18px;
+  margin-bottom: 16px;
+}
+
+h2 { font-size: 19px; margin-bottom: 14px; color: #54dfbd; }
+h3 { margin-bottom: 10px; }
+
+button {
+  background: #087fdb;
+  color: white;
+  border: none;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+  margin-top: 12px;
+}
+
+button:active { opacity: .8; }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 14px;
+}
+
+.value {
+  font-size: 28px;
+  font-weight: bold;
+  margin: 10px 0;
+}
+
+.small { color: #b5c8dd; font-size: 13px; line-height: 1.6; }
+.green { color: #45d6a0; }
+.yellow { color: #ffd166; }
+.red { color: #ff7373; }
+
+#map {
+  height: 330px;
+  border-radius: 10px;
+  z-index: 1;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+}
+
+th, td {
+  padding: 12px 8px;
+  text-align: left;
+  border-bottom: 1px solid #294967;
+}
+
+th { color: #54dfbd; }
+
+footer {
+  text-align: center;
+  color: #9eb3ca;
+  padding: 25px;
+}
+
+.notice {
+  background: #263b54;
+  padding: 12px;
+  border-radius: 8px;
+  color: #ffd98c;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+@media(max-width:600px) {
+  header h1 { font-size: 23px; }
+  main { padding: 10px; }
+  #map { height: 270px; }
+  th, td { font-size: 13px; }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>🌿 ClimateGuard AI</h1>
+  <p>AI-Empowered Early Warning System for Dengue & Malaria</p>
+</header>
+
+<nav>
+  <a href="#dashboard">Dashboard</a>
+  <a href="#weather">Weather</a>
+  <a href="#map-section">Risk Map</a>
+  <a href="#history">History</a>
+  <a href="#alerts">Alerts</a>
+  <a href="#prevention">Prevention</a>
+</nav>
+
+<main>
+
+<section id="dashboard" class="card">
+  <h2>Welcome to ClimateGuard AI</h2>
+  <p class="small">
+    Monitor weather conditions and explore historical disease
+    information to support early prevention.
+  </p>
+  <br>
+  <h3>📍 Your Current Location</h3>
+  <p id="location">Location not detected yet.</p>
+  <p class="small" id="coordinates">Latitude and longitude will appear here.</p>
+  <button onclick="detectLocation()">📍 Detect My Location</button>
+  <p class="small" id="locationStatus" aria-live="polite">
+    Allow location access when your browser asks.
+  </p>
+</section>
+
+<section id="weather">
+  <h2>🌦 Weather Information</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>🌡 Temperature</h3>
+      <div class="value" id="temperature">-- °C</div>
+      <p class="small">Current temperature</p>
+    </div>
+
+    <div class="card">
+      <h3>💧 Humidity</h3>
+      <div class="value" id="humidity">-- %</div>
+      <p class="small">Relative humidity</p>
+    </div>
+
+    <div class="card">
+      <h3>🌧 Rainfall</h3>
+      <div class="value" id="rainfall">-- mm</div>
+      <p class="small">Current precipitation</p>
+    </div>
+  </div>
+  <p class="small" id="weatherStatus">
+    Detect your location to retrieve weather information.
+  </p>
+  <p class="small" id="updated"></p>
+</section>
+
+<section>
+  <h2>🦟 Disease Risk Overview</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>🦟 Dengue Risk</h3>
+      <div class="value yellow">Awaiting model</div>
+      <p class="small">AI prediction will appear here after model integration.</p>
+    </div>
+
+    <div class="card">
+      <h3>🦟 Malaria Risk</h3>
+      <div class="value yellow">Awaiting model</div>
+      <p class="small">AI prediction will appear here after model integration.</p>
+    </div>
+  </div>
+  <p class="notice">
+    These are not yet actual disease predictions. A validated
+    machine-learning model and reliable disease records are required.
+  </p>
+</section>
+
+<section id="map-section" class="card">
+  <h2>🗺 Location Map</h2>
+  <p class="small">
+    The map shows your detected coordinates. Disease-risk zones
+    will be added after verified area-wise data is available.
+  </p>
+  <br>
+  <div id="map"></div>
+</section>
+
+<section id="history" class="card">
+  <h2>📊 Disease History – Last 5 Years</h2>
+  <p class="small">
+    Historical dengue and malaria records, organised by area and year.
+  </p>
+
+  <label for="area">Select area:</label>
+  <select id="area" style="padding:10px;margin:10px 0;width:100%;">
+    <option value="">Select an area</option>
+    <option>Hadapsar</option>
+    <option>Kothrud</option>
+    <option>Shivajinagar</option>
+    <option>Baner</option>
+    <option>Viman Nagar</option>
+  </select>
+
+  <label for="disease">Select disease:</label>
+  <select id="disease" style="padding:10px;margin:10px 0;width:100%;">
+    <option>Dengue</option>
+    <option>Malaria</option>
+  </select>
+
+  <div class="notice" id="historyStatus">
+    No verified area-wise patient records have been connected yet.
+    Historical figures will appear here after adding a reliable dataset.
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>Year</th><th>Reported cases</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>2021</td><td>Awaiting verified data</td></tr>
+      <tr><td>2022</td><td>Awaiting verified data</td></tr>
+      <tr><td>2023</td><td>Awaiting verified data</td></tr>
+      <tr><td>2024</td><td>Awaiting verified data</td></tr>
+      <tr><td>2025</td><td>Awaiting verified data</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="alerts" class="card">
+  <h2>🔔 Health Alerts</h2>
+  <p class="small">
+    No verified outbreak alerts are connected yet.
+    Alerts will be displayed here when reliable risk information is available.
+  </p>
+</section>
+
+<section id="prevention" class="card">
+  <h2>🛡 Prevention Tips</h2>
+  <p>✅ Remove stagnant water around your home.</p><br>
+  <p>✅ Use mosquito repellents.</p><br>
+  <p>✅ Wear full-sleeved clothing.</p><br>
+  <p>✅ Keep water containers covered.</p><br>
+  <p>✅ Seek medical advice if you develop concerning symptoms.</p>
+</section>
+
+</main>
+
+<footer>
+  ClimateGuard AI | Predict • Prevent • Protect
+  <p class="small">Educational prototype – not a medical diagnosis system.</p>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+const map = L.map('map').setView([18.5204, 73.8567], 11);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
+
+let marker;
+
+function detectLocation() {
+  const status = document.getElementById("locationStatus");
+
+  if (!navigator.geolocation) {
+    status.textContent = "GPS location is not supported by this browser.";
+    return;
+  }
+
+  status.textContent = "Requesting your location permission...";
+
+  navigator.geolocation.getCurrentPosition(
+    async function(position) {
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
+
+      document.getElementById("location").textContent =
+        "Your detected location";
+
+      document.getElementById("coordinates").textContent =
+        "Latitude: " + lat.toFixed(5) +
+        " | Longitude: " + lon.toFixed(5);
+
+      status.textContent = "Location detected successfully.";
+
+      map.setView([lat, lon], 13);
+
+      if (marker) map.removeLayer(marker);
+
+      marker = L.marker([lat, lon])
+        .addTo(map)
+        .bindPopup("Your detected location")
+        .openPopup();
+
+      await getWeather(lat, lon);
+    },
+
+    function(error) {
+      status.textContent =
+        "Location permission was denied or unavailable. Please enable location access and try again.";
+    },
+
+    { enableHighAccuracy: true, timeout: 15000 }
+  );
+}
+
+async function getWeather(lat, lon) {
+  const status = document.getElementById("weatherStatus");
+
+  status.textContent = "Loading weather information...";
+
+  const url =
+    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code&timezone=auto`;
+
+  try {
+    const response = await fetch(url);
+
+    if (!response.ok) throw new Error("Weather service error");
+
+    const data = await response.json();
+    const weather = data.current;
+
+    document.getElementById("temperature").textContent =
+      weather.temperature_2m + " °C";
+
+    document.getElementById("humidity").textContent =
+      weather.relative_humidity_2m + " %";
+
+    document.getElementById("rainfall").textContent =
+      weather.precipitation + " mm";
+
+    status.textContent = "Weather data received from Open-Meteo.";
+
+    document.getElementById("updated").textContent =
+      "Weather observation time: " + weather.time +
+      " | Timezone: " + data.timezone;
+  } catch(error) {
+    status.textContent =
+      "Unable to retrieve weather data. Please try again.";
+  }
+}
+</script>
+
+</body>
+</html>
