@@ -1,11 +1,9 @@
-
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 import httpx
 
 app = FastAPI(title="ClimateGuard AI Backend")
 
-# Allow the frontend to communicate with the backend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -13,6 +11,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+WEATHER_WORKER_URL = (
+    "https://climateguard-weather.samdadesrushti1.workers.dev/api/weather"
+)
+
 
 @app.get("/")
 def home():
@@ -27,41 +30,59 @@ async def get_weather(
     latitude: float = Query(..., ge=-90, le=90),
     longitude: float = Query(..., ge=-180, le=180)
 ):
-    url = "https://api.open-meteo.com/v1/forecast"
-
     params = {
         "latitude": latitude,
-        "longitude": longitude,
-        "current": (
-            "temperature_2m,"
-            "relative_humidity_2m,"
-            "precipitation,"
-            "wind_speed_10m"
-        )
+        "longitude": longitude
     }
 
     try:
-        async with httpx.AsyncClient(timeout=15) as client:
-            response = await client.get(url, params=params)
-            response.raise_for_status()
-            data = response.json()
+        async with httpx.AsyncClient(timeout=30) as client:
+            response = await client.get(
+                WEATHER_WORKER_URL,
+                params=params
+            )
+
+        if response.status_code != 200:
+            try:
+                error_data = response.json()
+            except ValueError:
+                error_data = {}
+
+            print("Weather Worker error:", error_data)
+
+            return {
+                "status": "error",
+                "message": "Weather service request failed",
+                "worker_status": response.status_code,
+                "provider_status": error_data.get("provider_status")
+            }
+
+        data = response.json()
+
+        if data.get("status") != "success":
+            return {
+                "status": "error",
+                "message": data.get(
+                    "message",
+                    "Weather data unavailable"
+                )
+            }
 
         return {
             "status": "success",
-            "location": {
-                "latitude": latitude,
-                "longitude": longitude
-            },
-            "weather": data.get("current", {}),
-            "source": "Open-Meteo"
+            "location": data.get("location"),
+            "weather": data.get("weather"),
+            "source": data.get("source")
         }
 
     except httpx.HTTPError as exc:
-        print(f"Weather API Error: {type(exc).__name__}: {exc}")
+        print(
+            f"Weather connection error: "
+            f"{type(exc).__name__}: {exc}"
+        )
 
         return {
             "status": "error",
-            "message": "Unable to fetch weather data",
-            "error_type": type(exc).__name__,
-            "details": str(exc)
+            "message": "Unable to connect to weather service",
+            "error_type": type(exc).__name__
         }
