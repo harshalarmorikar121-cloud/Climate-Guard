@@ -57,11 +57,11 @@ async def get_weather(
         }
 
     except httpx.HTTPError as exc:
-    print(f"Weather API Error: {type(exc).__name__}: {exc}")
+        print(f"Weather API Error: {type(exc).__name__}: {exc}")
 
-    return {
-        "status": "error",
-        "message": "Unable to fetch weather data",
-        "error_type": type(exc).__name__,
-        "details": str(exc)
-    }
+        return {
+            "status": "error",
+            "message": "Unable to fetch weather data",
+            "error_type": type(exc).__name__,
+            "details": str(exc)
+        }
