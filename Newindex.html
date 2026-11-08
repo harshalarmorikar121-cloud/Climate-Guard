@@ -901,49 +901,63 @@ function setBadge(id,level){
 }
 
 /* Live weather from Open-Meteo */
-async function getWeather(lat,lon){
-  const url=
-    "https://api.open-meteo.com/v1/forecast?latitude="+lat+
-    "&longitude="+lon+
-    "&current=temperature_2m,relative_humidity_2m,precipitation&timezone=auto";
 
-  try{
-    const response=await fetch(url);
+async function getWeather(lat, lon) {
+  const url =
+    "https://climateguard-backend-mqaf.onrender.com/api/weather" +
+    "?latitude=" + encodeURIComponent(lat) +
+    "&longitude=" + encodeURIComponent(lon);
 
-    if(!response.ok){
-      throw new Error("Weather request failed");
+  const message = document.getElementById("weatherMessage");
+
+  message.textContent = "Loading live weather data...";
+
+  try {
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error("Backend request failed: " + response.status);
     }
 
-    const data=await response.json();
-    const c=data.current;
+    const data = await response.json();
 
-    document.getElementById("temperature").textContent=
-      c.temperature_2m+" °C";
+    if (data.status !== "success" || !data.weather) {
+      throw new Error(data.message || "Weather data unavailable");
+    }
 
-    document.getElementById("humidity").textContent=
-      c.relative_humidity_2m+" %";
+    const current = data.weather;
 
-    document.getElementById("rainfall").textContent=
-      c.precipitation+" mm";
+    document.getElementById("temperature").textContent =
+      current.temperature_2m + " °C";
 
-    document.getElementById("weatherTemp").textContent=
-      c.temperature_2m+" °C";
+    document.getElementById("humidity").textContent =
+      current.relative_humidity_2m + " %";
 
-    document.getElementById("weatherHumidity").textContent=
-      c.relative_humidity_2m+" %";
+    document.getElementById("rainfall").textContent =
+      current.precipitation + " mm";
 
-    document.getElementById("weatherRain").textContent=
-      c.precipitation+" mm";
+    document.getElementById("weatherTemp").textContent =
+      current.temperature_2m + " °C";
 
-    document.getElementById("weatherMessage").textContent=
-      "Weather data loaded for "+lat.toFixed(3)+", "+lon.toFixed(3)+
-      ". Weather supports research but does not independently determine disease risk.";
+    document.getElementById("weatherHumidity").textContent =
+      current.relative_humidity_2m + " %";
 
-  }catch(e){
-    document.getElementById("weatherMessage").textContent=
-      "Unable to load live weather. Check your internet connection and try again.";
+    document.getElementById("weatherRain").textContent =
+      current.precipitation + " mm";
+
+    message.textContent =
+      "Live weather loaded successfully. Source: " +
+      data.source +
+      ". Weather readings alone cannot confirm disease risk.";
+
+  } catch (error) {
+    console.error("Weather error:", error);
+
+    message.textContent =
+      "Unable to load live weather. Please try again.";
   }
 }
+
 
 /* Alerts */
 function showRiskPopup(level,area){
