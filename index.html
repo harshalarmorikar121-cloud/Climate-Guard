@@ -297,70 +297,7 @@ footer{text-align:center;color:#748984;font-size:11px;padding:18px;border-top:1p
             <p class="muted">Current precipitation</p>
           </div>
         </div>
-        <!-- DENGUE AI PREDICTION -->
-<div class="card" style="margin-top:15px">
-
-  <h3>🤖 AI Dengue Risk Prediction</h3>
-
-  <p class="muted">
-    Select your district to get an experimental dengue risk estimate.
-  </p>
-
-  <label>Select District</label><br>
-
-  <select id="predDistrict" required>
-    <option value="">Choose your district</option>
-    <option value="Pune">Pune</option>
-    <option value="Mumbai">Mumbai</option>
-    <option value="Nagpur">Nagpur</option>
-    <option value="Nashik">Nashik</option>
-    <option value="Thane">Thane</option>
-    <option value="Kolhapur">Kolhapur</option>
-    <option value="Sangli">Sangli</option>
-    <option value="Satara">Satara</option>
-    <option value="Solapur">Solapur</option>
-    <option value="Raigad">Raigad</option>
-    <option value="Jalgaon">Jalgaon</option>
-    <option value="Akola">Akola</option>
-    <option value="Amravati">Amravati</option>
-    <option value="Nanded">Nanded</option>
-    <option value="Latur">Latur</option>
-    <option value="Beed">Beed</option>
-    <option value="Dhule">Dhule</option>
-    <option value="Wardha">Wardha</option>
-    <option value="Washim">Washim</option>
-    <option value="Buldhana">Buldhana</option>
-    <option value="Nandurbar">Nandurbar</option>
-    <option value="Gondia">Gondia</option>
-    <option value="Bhandara">Bhandara</option>
-    <option value="Gadchiroli">Gadchiroli</option>
-    <option value="Chandrapur">Chandrapur</option>
-    <option value="Yavatmal">Yavatmal</option>
-    <option value="Hingoli">Hingoli</option>
-    <option value="Parbhani">Parbhani</option>
-    <option value="Jalna">Jalna</option>
-    <option value="Ahmednagar">Ahmednagar</option>
-    <option value="Osmanabad">Osmanabad</option>
-    <option value="Ratnagiri">Ratnagiri</option>
-    <option value="Sindhudurg">Sindhudurg</option>
-  </select>
-
-  <br><br>
-
-  <button class="btn dark" type="button"
-    onclick="predictDengue()">
-    Check Dengue Risk
-  </button>
-
-  <div id="predictionResult" class="notice"
-    style="display:none; margin-top:15px">
-  </div>
-
-  <p class="muted" style="font-size:12px">
-    Experimental AI estimate, not an official health alert.
-  </p>
-
-</div>
+    
         
 
 
@@ -1222,71 +1159,7 @@ function drawHistoryChart(){
     }
   );
 }
-  
-/* AI Dengue Prediction API */
 
-async function predictDengue(event) {
-
-  event.preventDefault();
-
-  const resultBox =
-    document.getElementById("predictionResult");
-
-  resultBox.style.display = "block";
-  resultBox.textContent = "Running dengue prediction...";
-
-  const inputData = {
-    district: document.getElementById("predDistrict").value.trim(),
-    year: Number(document.getElementById("predYear").value),
-    temperature: Number(document.getElementById("predTemp").value),
-    humidity: Number(document.getElementById("predHumidity").value),
-    rainfall: Number(document.getElementById("predRainfall").value),
-    previous_year_rate: Number(
-      document.getElementById("predPreviousRate").value
-    )
-  };
-
-  try {
-
-    const response = await fetch(
-      "https://climateguard-backend-mqaf.onrender.com/api/predict/dengue",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(inputData)
-      }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data.detail || "Dengue prediction failed"
-      );
-    }
-
-    resultBox.innerHTML = `
-      <h3>Prediction Result</h3>
-      <p><b>District:</b> ${escapeHTML(data.district)}</p>
-      <p><b>Year:</b> ${data.year}</p>
-      <p><b>Predicted Rate:</b>
-        ${data.predicted_dengue_rate} cases per 100,000 people
-      </p>
-      <p><b>Model:</b> ${escapeHTML(data.model)}</p>
-      <p>${escapeHTML(data.disclaimer)}</p>
-    `;
-
-  } catch (error) {
-
-    console.error("Dengue prediction error:", error);
-
-    resultBox.textContent =
-      "Prediction error: " + error.message;
-
-  }
-}
 
 
 /* Initial setup */
