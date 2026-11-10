@@ -1307,26 +1307,34 @@ window.addEventListener("load",()=>{
   const API_URL = "https://climateguard-backend-mqaf.onrender.com";
 
 async function loadCityData() {
+    const cityElement = document.getElementById("city-name");
+
     try {
         const response = await fetch(`${API_URL}/api/weather`);
 
         if (!response.ok) {
-            throw new Error("Backend connection failed");
+            throw new Error("Unable to connect to backend");
         }
 
         const data = await response.json();
 
-        console.log("Backend response:", data);
+        console.log("Weather API Data:", data);
 
-        document.getElementById("city-name").textContent =
-            data.city || "City unavailable";
+        if (cityElement) {
+            cityElement.textContent = data.city || "City unavailable";
+        }
 
     } catch (error) {
-        console.error("Error:", error);
+        console.error("Backend Error:", error);
+
+        if (cityElement) {
+            cityElement.textContent = "Location unavailable";
+        }
     }
 }
 
 loadCityData();
+  
 
 </script>
 </body>
