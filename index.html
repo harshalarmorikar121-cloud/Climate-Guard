@@ -1306,14 +1306,16 @@ window.addEventListener("load",()=>{
 });
   const API_URL = "https://climateguard-backend-mqaf.onrender.com";
 
-async function loadCityData() {
+async function loadCityData(latitude, longitude) {
     const cityElement = document.getElementById("city-name");
 
     try {
-        const response = await fetch(`${API_URL}/api/weather`);
+        const response = await fetch(
+            `${API_URL}/api/weather?latitude=${latitude}&longitude=${longitude}`
+        );
 
         if (!response.ok) {
-            throw new Error("Unable to connect to backend");
+            throw new Error("Weather API request failed");
         }
 
         const data = await response.json();
@@ -1321,7 +1323,8 @@ async function loadCityData() {
         console.log("Weather API Data:", data);
 
         if (cityElement) {
-            cityElement.textContent = data.city || "City unavailable";
+            cityElement.textContent =
+                data.city || "City unavailable";
         }
 
     } catch (error) {
@@ -1333,7 +1336,8 @@ async function loadCityData() {
     }
 }
 
-loadCityData();
+// Default location: Pune
+loadCityData(18.5204, 73.8567);
   
 
 </script>
