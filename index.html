@@ -297,12 +297,6 @@ footer{text-align:center;color:#748984;font-size:11px;padding:18px;border-top:1p
             <p class="muted">Current precipitation</p>
           </div>
         </div>
-    
-        
-
-
-</div>
-
 
         <div class="grid two" style="margin-top:13px">
           <div class="card alert-card">
@@ -320,7 +314,7 @@ footer{text-align:center;color:#748984;font-size:11px;padding:18px;border-top:1p
         </div>
 
         <div class="notice">
-          <b> </b> 
+          <b> </b>
         </div>
       </section>
 
@@ -475,9 +469,7 @@ footer{text-align:center;color:#748984;font-size:11px;padding:18px;border-top:1p
 
     </main>
 
-    <footer>
-      
-    </footer>
+    <footer></footer>
   </div>
 </div>
 
@@ -542,7 +534,6 @@ const riskZones=[
   level:"HIGH",
   dengue:"HIGH",
   malaria:"MEDIUM",
-  
  },
  {
   name:"Pune West —  Zone B",
@@ -626,9 +617,9 @@ function makeUserIcon(){
   });
 }
 
-/* Update the user's blue GPS pin on all available maps */
+/* UPDATED: Update GPS marker and move maps to detected coordinates */
 function updateUserMarkers(){
-  if(!userLocationDetected)return;
+  if(!userLocationDetected) return;
 
   const point=[userLat,userLon];
 
@@ -647,6 +638,9 @@ function updateUserMarkers(){
         }
       ).addTo(m).bindPopup("<b>Your detected GPS location</b>");
     }
+
+    // Move map to the detected GPS location
+    m.setView(point,13);
   });
 }
 
@@ -751,7 +745,7 @@ function drawDiseaseLayer(){
     circle.bindPopup(
       "<b>"+z.label+"</b><br>"+
       (isDengue?"Dengue":"Malaria")+
-      "  risk: "+z.level
+      " risk: "+z.level
     );
 
     secondLayer.push(circle);
@@ -769,7 +763,7 @@ function drawDiseaseLayer(){
     center.bindPopup(
       "<b>"+z.label+"</b><br>"+
       (isDengue?"Dengue":"Malaria")+
-      "  risk: "+z.level
+      " risk: "+z.level
     );
 
     secondLayer.push(center);
@@ -798,15 +792,16 @@ function setDiseaseMap(type){
 function showZoneDetails(z){
   document.getElementById("riskDetails").innerHTML=
     "<b>"+z.name+"</b><br>"+
-    "Overall  risk: <b>"+z.level+"</b><br>"+
+    "Overall risk: <b>"+z.level+"</b><br>"+
     "Dengue: "+z.dengue+"<br>"+
     "Malaria: "+z.malaria+"<br>"+
     z.reason+
     "<br><small>.</small>";
 }
 
-/* GPS permission is requested only after the user clicks a location button */
+/* UPDATED GPS FUNCTION */
 function getLocation(){
+
   const status=document.getElementById("locationStatus");
 
   if(!navigator.geolocation){
@@ -814,10 +809,17 @@ function getLocation(){
     return;
   }
 
-  status.textContent="Requesting GPS permission…";
+  if(!window.isSecureContext){
+    status.textContent="Please open the website using HTTPS to access GPS.";
+    return;
+  }
+
+  status.textContent="Detecting your location...";
 
   navigator.geolocation.getCurrentPosition(
+
     async position=>{
+
       userLat=position.coords.latitude;
       userLon=position.coords.longitude;
       userLocationDetected=true;
@@ -829,28 +831,38 @@ function getLocation(){
 
       status.textContent="GPS location detected successfully.";
 
+      // Update all available maps
       updateUserMarkers();
 
+      // Load weather for detected coordinates
       await getWeather(userLat,userLon);
+
+      // Update nearest sample risk zone
       updateNearestDemoZone();
+
     },
 
     error=>{
+
+      console.error("GPS ERROR:",error.code,error.message);
+
       const messages={
-        1:"Location permission was denied. Allow location access in browser settings and try again.",
-        2:"Your location is unavailable. Check GPS and internet connection.",
-        3:"GPS request timed out. Please try again."
+        1:"Location permission denied. Allow location access in Chrome.",
+        2:"Location unavailable. Check your phone GPS and internet connection.",
+        3:"Location request timed out. Please try again."
       };
 
       status.textContent=
-        messages[error.code]||"Unable to detect GPS location.";
+        messages[error.code]||"Unable to detect location.";
+
     },
 
     {
-      enableHighAccuracy:true,
-      timeout:15000,
-      maximumAge:0
+      enableHighAccuracy:false,
+      timeout:30000,
+      maximumAge:60000
     }
+
   );
 }
 
@@ -964,7 +976,6 @@ async function getWeather(lat, lon) {
   }
 }
 
-
 /* Alerts */
 function showRiskPopup(level,area){
   const title=document.getElementById("popupTitle");
@@ -977,8 +988,7 @@ function showRiskPopup(level,area){
     area+" is marked "+level+
     " in the sample map. Follow mosquito-prevention measures and check official local health updates.";
 
-  note.textContent=
-    " ";
+  note.textContent=" ";
 
   document.getElementById("riskPopup").classList.add("show");
 
@@ -1160,8 +1170,6 @@ function drawHistoryChart(){
   );
 }
 
-
-
 /* Initial setup */
 window.addEventListener("load",()=>{
   renderAlerts();
@@ -1177,7 +1185,8 @@ window.addEventListener("load",()=>{
   document.getElementById("locationStatus").textContent=
     "Tap Detect GPS and allow location access.";
 });
-  const API_URL = "https://climateguard-backend-mqaf.onrender.com";
+
+const API_URL = "https://climateguard-backend-mqaf.onrender.com";
 
 async function loadCityData(latitude, longitude) {
     const cityElement = document.getElementById("city-name");
@@ -1209,7 +1218,7 @@ async function loadCityData(latitude, longitude) {
 }
 
 loadCityData(18.5204, 73.8567);
-  
+
 </script>
 </body>
 </html>
