@@ -231,17 +231,17 @@ footer{text-align:center;color:#748984;font-size:11px;padding:18px;border-top:1p
           <div class="card">
             <h3>🦟 Dengue Risk</h3>
             <div class="metric" id="dengueRisk">MEDIUM</div>
-            <span class="risk-pill medium" id="dengueBadge">DEMO MEDIUM</span>
+            <span class="risk-pill medium" id="dengueBadge"> MEDIUM</span>
             <div class="risk-line"><span id="dengueBar" style="width:55%;background:#eab83e"></span></div>
-            <p class="muted">Illustrative prototype risk level, not a real outbreak warning.</p>
+            <p class="muted"></p>
           </div>
 
           <div class="card">
             <h3>🦟 Malaria Risk</h3>
             <div class="metric" id="malariaRisk">LOW</div>
-            <span class="risk-pill low" id="malariaBadge">DEMO LOW</span>
+            <span class="risk-pill low" id="malariaBadge">LOW</span>
             <div class="risk-line"><span id="malariaBar" style="width:25%;background:#26a66d"></span></div>
-            <p class="muted">Illustrative prototype risk level, not a real outbreak warning.</p>
+            <p class="muted"></p>
           </div>
         </div>
 
@@ -264,10 +264,10 @@ footer{text-align:center;color:#748984;font-size:11px;padding:18px;border-top:1p
           <div class="card">
             <div class="map-title">
               <h3>📊 7-Day Environmental Risk Forecast</h3>
-              <span class="risk-pill medium">Moderate demo</span>
+              <span class="risk-pill medium">Moderate</span>
             </div>
             <div class="chart-wrap"><canvas id="forecastChart"></canvas></div>
-            <p class="small-note muted">Illustrative index only. Not a validated disease forecast.</p>
+            <p class="small-note muted">.</p>
           </div>
         </div>
 
@@ -307,7 +307,7 @@ footer{text-align:center;color:#748984;font-size:11px;padding:18px;border-top:1p
         <div class="grid two" style="margin-top:13px">
           <div class="card alert-card">
             <h3>⚠ Health Alert</h3>
-            <strong id="dashboardAlert">Demo risk information</strong>
+            <strong id="dashboardAlert">risk information</strong>
             <p class="muted">Use mosquito protection, remove stagnant water and follow official local health guidance.</p>
             <button class="btn soft" onclick="showPage('alerts')">View alerts →</button>
           </div>
@@ -383,13 +383,13 @@ footer{text-align:center;color:#748984;font-size:11px;padding:18px;border-top:1p
         <div class="card">
           <h3>Illustrative Dengue and Malaria Cases</h3>
           <div class="chart-wrap"><canvas id="historyChart"></canvas></div>
-          <p class="muted">Sample figures only. Replace with verified district-wise data before real-world use.</p>
+          <p class="muted">verified district-wise data before real-world use.</p>
         </div>
       </section>
 
       <!-- ALERTS -->
       <section class="page" id="alerts">
-        <h1 class="page-title">Smart Alert History</h1>
+        <h1 class="page-title">Alert History</h1>
         <p class="page-sub">Messages displayed by this prototype during your visits.</p>
 
         <div class="card">
@@ -476,7 +476,7 @@ footer{text-align:center;color:#748984;font-size:11px;padding:18px;border-top:1p
     </main>
 
     <footer>
-      ClimateGuard AI · Student Prototype · Demo risk data is not an official health warning.
+      
     </footer>
   </div>
 </div>
@@ -536,16 +536,16 @@ function toggleSidebar(){
 /* Demonstration zones only */
 const riskZones=[
  {
-  name:"Pune Central — Demo Zone A",
+  name:"Pune Central —  Zone A",
   lat:18.5204,
   lon:73.8567,
   level:"HIGH",
   dengue:"HIGH",
   malaria:"MEDIUM",
-  reason:"Illustrative high-risk sample zone."
+  
  },
  {
-  name:"Pune West — Demo Zone B",
+  name:"Pune West —  Zone B",
   lat:18.5700,
   lon:73.7800,
   level:"MEDIUM",
@@ -554,7 +554,7 @@ const riskZones=[
   reason:"Illustrative medium-risk sample zone."
  },
  {
-  name:"Pune East — Demo Zone C",
+  name:"Pune East — Zone C",
   lat:18.4800,
   lon:73.9200,
   level:"LOW",
@@ -798,11 +798,11 @@ function setDiseaseMap(type){
 function showZoneDetails(z){
   document.getElementById("riskDetails").innerHTML=
     "<b>"+z.name+"</b><br>"+
-    "Overall sample risk: <b>"+z.level+"</b><br>"+
+    "Overall  risk: <b>"+z.level+"</b><br>"+
     "Dengue: "+z.dengue+"<br>"+
     "Malaria: "+z.malaria+"<br>"+
     z.reason+
-    "<br><small>Illustrative demo information only.</small>";
+    "<br><small>.</small>";
 }
 
 /* GPS permission is requested only after the user clicks a location button */
@@ -903,7 +903,7 @@ function setRiskDisplay(zone){
 function setBadge(id,level){
   const el=document.getElementById(id);
   el.className="risk-pill "+level.toLowerCase();
-  el.textContent="DEMO "+level;
+  el.textContent=" "+level;
 }
 
 /* Live weather from Open-Meteo */
@@ -971,14 +971,14 @@ function showRiskPopup(level,area){
   const message=document.getElementById("popupMessage");
   const note=document.getElementById("popupNote");
 
-  title.textContent=level+" Demo Risk Update";
+  title.textContent=level+" Risk Update";
 
   message.textContent=
     area+" is marked "+level+
     " in the sample map. Follow mosquito-prevention measures and check official local health updates.";
 
   note.textContent=
-    "Demonstration alert only — not a confirmed outbreak warning.";
+    " ";
 
   document.getElementById("riskPopup").classList.add("show");
 
