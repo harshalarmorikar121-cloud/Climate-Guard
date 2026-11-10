@@ -183,7 +183,7 @@ footer{text-align:center;color:#748984;font-size:11px;padding:18px;border-top:1p
         <button class="icon-btn mobile-menu" onclick="toggleSidebar()" aria-label="Open menu">☰</button>
         <div class="location-pill">
           <b>📍</b>
-          <span id="topLocation">Pune, Maharashtra (demo)</span>
+          <span id="topLocation">Pune, Maharashtra </span>
           <button onclick="getLocation()" title="Detect my GPS location" style="border:0;background:transparent;font-size:17px">⟳</button>
         </div>
       </div>
@@ -320,7 +320,7 @@ footer{text-align:center;color:#748984;font-size:11px;padding:18px;border-top:1p
         </div>
 
         <div class="notice">
-          <b>Prototype data notice:</b> Risk levels, risk circles and historical figures are sample data for demonstrating the interface. They are not official health department information or validated AI predictions.
+          <b> </b> 
         </div>
       </section>
 
@@ -378,10 +378,10 @@ footer{text-align:center;color:#748984;font-size:11px;padding:18px;border-top:1p
       <!-- HISTORY -->
       <section class="page" id="history">
         <h1 class="page-title">Disease History & Analytics</h1>
-        <p class="page-sub">Example trend chart for demonstrating historical disease analysis.</p>
+        <p class="page-sub">historical disease analysis.</p>
 
         <div class="card">
-          <h3>Illustrative Dengue and Malaria Cases</h3>
+          <h3> Dengue and Malaria Cases</h3>
           <div class="chart-wrap"><canvas id="historyChart"></canvas></div>
           <p class="muted">verified district-wise data before real-world use.</p>
         </div>
@@ -551,7 +551,7 @@ const riskZones=[
   level:"MEDIUM",
   dengue:"MEDIUM",
   malaria:"MEDIUM",
-  reason:"Illustrative medium-risk sample zone."
+  reason:"Illustrative medium-risk zone."
  },
  {
   name:"Pune East — Zone C",
@@ -560,7 +560,7 @@ const riskZones=[
   level:"LOW",
   dengue:"LOW",
   malaria:"LOW",
-  reason:"Illustrative low-risk sample zone."
+  reason:"Illustrative low-risk zone."
  }
 ];
 
@@ -751,7 +751,7 @@ function drawDiseaseLayer(){
     circle.bindPopup(
       "<b>"+z.label+"</b><br>"+
       (isDengue?"Dengue":"Malaria")+
-      " sample risk: "+z.level
+      "  risk: "+z.level
     );
 
     secondLayer.push(circle);
@@ -769,7 +769,7 @@ function drawDiseaseLayer(){
     center.bindPopup(
       "<b>"+z.label+"</b><br>"+
       (isDengue?"Dengue":"Malaria")+
-      " sample risk: "+z.level
+      "  risk: "+z.level
     );
 
     secondLayer.push(center);
