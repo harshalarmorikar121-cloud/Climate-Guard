@@ -139,7 +139,9 @@ footer{text-align:center;color:#748984;font-size:11px;padding:18px;border-top:1p
  .location-pill{font-size:11px;padding:9px 11px}  
  .brand{padding-top:25px}  
 }  
-</style>  </head>  <body>  
+</style>
+</head>
+<body>  
 <div class="app">    <aside class="sidebar" id="sidebar">  
     <div class="brand">  
       <div class="brand-mark">🛡</div>  
@@ -160,7 +162,8 @@ footer{text-align:center;color:#748984;font-size:11px;padding:18px;border-top:1p
   <small>ClimateGuard AI</small>  
 </div>
 
-  </aside>    <div class="main">  
+  </aside> 
+  <div class="main">  
     <header class="topbar">  
       <div style="display:flex;align-items:center;gap:10px;min-width:0">  
         <button class="icon-btn mobile-menu" onclick="toggleSidebar()" aria-label="Open menu">☰</button>  
@@ -777,53 +780,62 @@ function showZoneDetails(z){
 }  
   
 /* GPS permission is requested only after the user clicks a location button */  
-function getLocation(){  
-  const status=document.getElementById("locationStatus");  
-  
-  if(!navigator.geolocation){  
-    status.textContent="GPS location is not supported by this browser.";  
-    return;  
-  }  
-  
-  status.textContent="Requesting GPS permission…";  
-  
-  navigator.geolocation.getCurrentPosition(  
-    async position=>{  
-      userLat=position.coords.latitude;  
-      userLon=position.coords.longitude;  
-      userLocationDetected=true;  
-  
-      const label=userLat.toFixed(4)+", "+userLon.toFixed(4);  
-  
-      document.getElementById("location").textContent=label;  
-      document.getElementById("topLocation").textContent="GPS: "+label;  
-  
-      status.textContent="GPS location detected successfully.";  
-  
-      updateUserMarkers();  
-  
-      await getWeather(userLat,userLon);  
-      updateNearestDemoZone();  
-    },  
-  
-    error=>{  
-      const messages={  
-        1:"Location permission was denied. Allow location access in browser settings and try again.",  
-        2:"Your location is unavailable. Check GPS and internet connection.",  
-        3:"GPS request timed out. Please try again."  
-      };  
-  
-      status.textContent=  
-        messages[error.code]||"Unable to detect GPS location.";  
-    },  
-  
-    {  
-      enableHighAccuracy:true,  
-      timeout:15000,  
-      maximumAge:0  
-    }  
-  );  
-}  
+
+function getLocation() {
+  const status = document.getElementById("locationStatus");
+
+  if (!navigator.geolocation) {
+    status.textContent = "GPS is not supported by this browser.";
+    return;
+  }
+
+  if (!window.isSecureContext) {
+    status.textContent = "GPS requires a secure HTTPS website.";
+    return;
+  }
+
+  status.textContent = "Detecting your location. Please wait...";
+
+  navigator.geolocation.getCurrentPosition(
+    async position => {
+      userLat = position.coords.latitude;
+      userLon = position.coords.longitude;
+      userLocationDetected = true;
+
+      const label = userLat.toFixed(4) + ", " + userLon.toFixed(4);
+
+      document.getElementById("location").textContent = label;
+      document.getElementById("topLocation").textContent = "GPS: " + label;
+
+      status.textContent = "GPS location detected successfully.";
+
+      updateUserMarkers();
+
+      getWeather(userLat, userLon);
+      updateNearestDemoZone();
+    },
+
+    error => {
+      console.error("GPS Error:", error.code, error.message);
+
+      const messages = {
+        1: "Location permission denied. Allow location access in Chrome settings.",
+        2: "Location unavailable. Turn on phone GPS and check your internet connection.",
+        3: "GPS timed out. Move near a window or outdoors and try again."
+      };
+
+      status.textContent =
+        messages[error.code] || "Unable to detect GPS location: " + error.message;
+    },
+
+    {
+      enableHighAccuracy: false,
+      timeout: 30000,
+      maximumAge: 60000
+    }
+  );
+}
+
   
 /* Find nearest illustrative demo zone */  
 function updateNearestDemoZone(){  
