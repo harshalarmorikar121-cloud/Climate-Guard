@@ -1304,6 +1304,29 @@ window.addEventListener("load",()=>{
   document.getElementById("locationStatus").textContent=
     "Tap Detect GPS and allow location access.";
 });
+  const API_URL = "https://climateguard-backend-mqaf.onrender.com";
+
+async function loadCityData() {
+    try {
+        const response = await fetch(`${API_URL}/api/weather`);
+
+        if (!response.ok) {
+            throw new Error("Backend connection failed");
+        }
+
+        const data = await response.json();
+
+        console.log("Backend response:", data);
+
+        document.getElementById("city-name").textContent =
+            data.city || "City unavailable";
+
+    } catch (error) {
+        console.error("Error:", error);
+    }
+}
+
+loadCityData();
 
 </script>
 </body>
