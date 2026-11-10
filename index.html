@@ -1315,20 +1315,19 @@ async function loadCityData(latitude, longitude) {
         );
 
         if (!response.ok) {
-            throw new Error("Weather API request failed");
+            throw new Error("Backend connection failed");
         }
 
         const data = await response.json();
 
-        console.log("Weather API Data:", data);
+        console.log("Weather data:", data);
 
         if (cityElement) {
-            cityElement.textContent =
-                data.city || "City unavailable";
+            cityElement.textContent = "Pune";
         }
 
     } catch (error) {
-        console.error("Backend Error:", error);
+        console.error("Weather API error:", error);
 
         if (cityElement) {
             cityElement.textContent = "Location unavailable";
@@ -1336,10 +1335,8 @@ async function loadCityData(latitude, longitude) {
     }
 }
 
-// Default location: Pune
 loadCityData(18.5204, 73.8567);
   
-
 </script>
 </body>
 </html>
